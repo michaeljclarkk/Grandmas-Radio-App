@@ -1,0 +1,32 @@
+# B4X generated output and backups
+**/Objects/
+**/AutoBackups/
+**/bin/
+**/gen/
+**/dexed/
+
+# Compiled application packages
+*.apk
+*.aab
+*.ipa
+*.jar
+*.class
+*.dex
+
+# Signing keys and signing configuration
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+*.mobileprovision
+*.provisionprofile
+key.properties
+keystore.properties
+signing.properties
+
+# Local editor and operating-system files
+.vscode/
+.DS_Store
+Thumbs.db

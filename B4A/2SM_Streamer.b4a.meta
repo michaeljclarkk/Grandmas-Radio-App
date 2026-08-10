@@ -1,0 +1,15 @@
+﻿ModuleBookmarks0=
+ModuleBookmarks1=
+ModuleBookmarks2=
+ModuleBookmarks3=
+ModuleBreakpoints0=
+ModuleBreakpoints1=
+ModuleBreakpoints2=
+ModuleBreakpoints3=
+ModuleClosedNodes0=
+ModuleClosedNodes1=
+ModuleClosedNodes2=
+ModuleClosedNodes3=1
+NavigationStack=Main,Globals,17,0,Main,Activity_Create,25,0,AudioService,Service_Create,19,1,AudioService,SetStreamUrl,29,0,AudioService,ExoPlayer_Ready,74,0,Visual Designer,MainPage.bal,-100,6,B4XMainPage,sbVolume_ValueChanged,69,0,B4XMainPage,UpdateStatus,64,0,B4XMainPage,B4XPage_Disappear,77,0,B4XMainPage,ImageView1_LongClick,81,0,B4XMainPage,btnUpdateStreamUrl_Click,58,0
+SelectedBuild=0
+VisibleModules=2,1
