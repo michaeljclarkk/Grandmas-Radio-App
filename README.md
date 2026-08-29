@@ -2,7 +2,7 @@
 
 A simple B4X/B4A Android radio player designed for easy use on phones and portrait tablets.
 
-It provides large controls for listening to 2SM Super Network and Vision Christian Radio, (These are my Grandma's favourite stations)
+It provides large controls for listening to 2SM Super Network, Vision Christian Radio, and ABC Southern Queensland. These are Grandma's favourite stations.
 
 ## Building
 

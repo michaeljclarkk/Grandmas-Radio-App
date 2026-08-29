@@ -18,8 +18,10 @@ Sub Class_Globals
 
 	Private Const STATION_2SM As String = "2sm"
 	Private Const STATION_VISION As String = "vision"
+	Private Const STATION_ABC_SOUTH_QLD As String = "abc_south_qld"
 	Private Const DEFAULT_2SM_URL As String = "https://cast4.asurahosting.com/proxy/2sm1269/stream"
 	Private Const DEFAULT_VISION_URL As String = "https://streams2.vision.org.au/vision128.mp3"
+	Private Const DEFAULT_ABC_SOUTH_QLD_URL As String = "https://streaming.abc-cdn.net.au/audio/hls/localsouthqld.m3u8?source=web"
 
 	Private Const STATE_STOPPED As String = "stopped"
 	Private Const STATE_CONNECTING As String = "connecting"
@@ -35,6 +37,7 @@ Sub Class_Globals
 	Private ColorBorder As Int = 0xFFE4E7EC
 	Private Color2SM As Int = 0xFFD62839
 	Private ColorVision As Int = 0xFF6246EA
+	Private ColorABC As Int = 0xFF0067A8
 	Private ColorSuccess As Int = 0xFF16875B
 	Private ColorWarning As Int = 0xFFB54708
 	Private ColorError As Int = 0xFFB42318
@@ -54,8 +57,10 @@ Sub Class_Globals
 	Private lblSettingsHint As B4XView
 	Private lbl2SMUrl As B4XView
 	Private lblVisionUrl As B4XView
+	Private lblABCUrl As B4XView
 	Private btn2SM As B4XView
 	Private btnVision As B4XView
+	Private btnABC As B4XView
 	Private btnPlayPause As B4XView
 	Private btnVolumeDown As B4XView
 	Private btnVolumeUp As B4XView
@@ -68,12 +73,14 @@ Sub Class_Globals
 	Private chkKeepAwake As CheckBox
 	Private txt2SMUrl As EditText
 	Private txtVisionUrl As EditText
+	Private txtABCUrl As EditText
 
 	Private SelectedStation As String
 	Private PlaybackState As String
 	Private StatusMessage As String
 	Private Url2SM As String
 	Private UrlVision As String
+	Private UrlABC As String
 	Private AutoPlay As Boolean
 	Private KeepAwake As Boolean
 	Private CurrentVolume As Int
@@ -118,9 +125,10 @@ End Sub
 
 Private Sub LoadSettings
 	SelectedStation = Store.GetDefault("selected_station", STATION_2SM)
-	If SelectedStation <> STATION_2SM And SelectedStation <> STATION_VISION Then SelectedStation = STATION_2SM
+	If SelectedStation <> STATION_2SM And SelectedStation <> STATION_VISION And SelectedStation <> STATION_ABC_SOUTH_QLD Then SelectedStation = STATION_2SM
 	Url2SM = Store.GetDefault("url_2sm", DEFAULT_2SM_URL)
 	UrlVision = Store.GetDefault("url_vision", DEFAULT_VISION_URL)
+	UrlABC = Store.GetDefault("url_abc_south_qld", DEFAULT_ABC_SOUTH_QLD_URL)
 	AutoPlay = Store.GetDefault("auto_play", False)
 	KeepAwake = Store.GetDefault("keep_awake", False)
 	CurrentVolume = Store.GetDefault("volume", 60)
@@ -138,13 +146,15 @@ Private Sub CreateInterface
 	pnlMain.Color = ColorBackground
 
 	lblTitle = CreateLabel(pnlMain, "Title", "GRANDMA'S RADIO", 30, True, ColorInk, "CENTER")
-	lblSubtitle = CreateLabel(pnlMain, "", "Two favourite stations. No fiddling required.", 16, False, ColorMuted, "CENTER")
+	lblSubtitle = CreateLabel(pnlMain, "", "Three favourite stations. No fiddling required.", 16, False, ColorMuted, "CENTER")
 	lblStationPrompt = CreateLabel(pnlMain, "", "CHOOSE A STATION", 14, True, ColorMuted, "LEFT")
 
 	btn2SM = CreateButton(pnlMain, "Station", "2SM" & CRLF & "SUPER NETWORK", 22, True)
 	btn2SM.Tag = STATION_2SM
 	btnVision = CreateButton(pnlMain, "Station", "VISION" & CRLF & "CHRISTIAN RADIO", 22, True)
 	btnVision.Tag = STATION_VISION
+	btnABC = CreateButton(pnlMain, "Station", "ABC" & CRLF & "SOUTHERN QLD", 19, True)
+	btnABC.Tag = STATION_ABC_SOUTH_QLD
 
 	pnlPlayer = xui.CreatePanel("")
 	pnlMain.AddView(pnlPlayer, 0, 0, 1dip, 1dip)
@@ -180,6 +190,7 @@ Private Sub CreateSettingsPanel
 	lblSettingsHint = CreateLabel(pnlSettingsCard, "", "These controls are tucked away to keep the main screen simple.", 14, False, ColorMuted, "LEFT")
 	lbl2SMUrl = CreateLabel(pnlSettingsCard, "", "2SM stream address", 14, True, ColorInk, "LEFT")
 	lblVisionUrl = CreateLabel(pnlSettingsCard, "", "Vision stream address", 14, True, ColorInk, "LEFT")
+	lblABCUrl = CreateLabel(pnlSettingsCard, "", "ABC Southern Queensland stream address", 14, True, ColorInk, "LEFT")
 
 	txt2SMUrl.Initialize("")
 	pnlSettingsCard.AddView(txt2SMUrl, 0, 0, 1dip, 1dip)
@@ -196,6 +207,14 @@ Private Sub CreateSettingsPanel
 	txtVisionUrl.TextColor = ColorInk
 	Dim xVision As B4XView = txtVisionUrl
 	xVision.SetColorAndBorder(0xFFF8FAFC, 1dip, ColorBorder, 12dip)
+
+	txtABCUrl.Initialize("")
+	pnlSettingsCard.AddView(txtABCUrl, 0, 0, 1dip, 1dip)
+	txtABCUrl.SingleLine = True
+	txtABCUrl.TextSize = 14
+	txtABCUrl.TextColor = ColorInk
+	Dim xABC As B4XView = txtABCUrl
+	xABC.SetColorAndBorder(0xFFF8FAFC, 1dip, ColorBorder, 12dip)
 
 	chkAutoPlay.Initialize("")
 	pnlSettingsCard.AddView(chkAutoPlay, 0, 0, 1dip, 1dip)
@@ -278,13 +297,23 @@ Private Sub B4XPage_Resize (Width As Int, Height As Int)
 	Top = Top + 32dip
 	Dim Gap As Int = 12dip
 	If Tablet Then Gap = 18dip
-	Dim StationWidth As Int = (ContentWidth - Gap) / 2
 	Dim StationHeight As Int = 98dip
 	If Tablet Then StationHeight = 126dip
 	If ShortScreen Then StationHeight = 86dip
-	btn2SM.SetLayoutAnimated(0, ContentLeft, Top, StationWidth, StationHeight)
-	btnVision.SetLayoutAnimated(0, ContentLeft + StationWidth + Gap, Top, StationWidth, StationHeight)
-	Top = Top + StationHeight + 16dip
+	If Tablet Then
+		Dim TabletStationWidth As Int = (ContentWidth - Gap * 2) / 3
+		btn2SM.SetLayoutAnimated(0, ContentLeft, Top, TabletStationWidth, StationHeight)
+		btnVision.SetLayoutAnimated(0, ContentLeft + TabletStationWidth + Gap, Top, TabletStationWidth, StationHeight)
+		btnABC.SetLayoutAnimated(0, ContentLeft + (TabletStationWidth + Gap) * 2, Top, TabletStationWidth, StationHeight)
+		Top = Top + StationHeight + 16dip
+	Else
+		Dim PhoneStationWidth As Int = (ContentWidth - Gap) / 2
+		btn2SM.SetLayoutAnimated(0, ContentLeft, Top, PhoneStationWidth, StationHeight)
+		btnVision.SetLayoutAnimated(0, ContentLeft + PhoneStationWidth + Gap, Top, PhoneStationWidth, StationHeight)
+		Top = Top + StationHeight + Gap
+		btnABC.SetLayoutAnimated(0, ContentLeft, Top, ContentWidth, StationHeight)
+		Top = Top + StationHeight + 16dip
+	End If
 
 	Dim FooterHeight As Int = 34dip
 	Dim PlayerHeight As Int = Min(IIf(Tablet, 372dip, 326dip), Height - Top - FooterHeight - 14dip)
@@ -333,34 +362,39 @@ Private Sub LayoutSettings(Width As Int, Height As Int)
 
 	Dim Pad As Int = 18dip
 	Dim InnerWidth As Int = CardWidth - Pad * 2
-	Dim Y As Int = 16dip
-	lblSettingsTitle.SetLayoutAnimated(0, Pad, Y, InnerWidth, 38dip)
-	Y = Y + 38dip
-	lblSettingsHint.SetLayoutAnimated(0, Pad, Y, InnerWidth, 42dip)
-	Y = Y + 48dip
-	lbl2SMUrl.SetLayoutAnimated(0, Pad, Y, InnerWidth, 22dip)
-	Y = Y + 24dip
+	Dim Y As Int = 14dip
+	lblSettingsTitle.SetLayoutAnimated(0, Pad, Y, InnerWidth, 34dip)
+	Y = Y + 34dip
+	lblSettingsHint.SetLayoutAnimated(0, Pad, Y, InnerWidth, 38dip)
+	Y = Y + 42dip
+	lbl2SMUrl.SetLayoutAnimated(0, Pad, Y, InnerWidth, 20dip)
+	Y = Y + 22dip
 	Dim x2SM As B4XView = txt2SMUrl
-	x2SM.SetLayoutAnimated(0, Pad, Y, InnerWidth, 50dip)
-	Y = Y + 58dip
-	lblVisionUrl.SetLayoutAnimated(0, Pad, Y, InnerWidth, 22dip)
-	Y = Y + 24dip
+	x2SM.SetLayoutAnimated(0, Pad, Y, InnerWidth, 44dip)
+	Y = Y + 50dip
+	lblVisionUrl.SetLayoutAnimated(0, Pad, Y, InnerWidth, 20dip)
+	Y = Y + 22dip
 	Dim xVision As B4XView = txtVisionUrl
-	xVision.SetLayoutAnimated(0, Pad, Y, InnerWidth, 50dip)
-	Y = Y + 58dip
+	xVision.SetLayoutAnimated(0, Pad, Y, InnerWidth, 44dip)
+	Y = Y + 50dip
+	lblABCUrl.SetLayoutAnimated(0, Pad, Y, InnerWidth, 20dip)
+	Y = Y + 22dip
+	Dim xABC As B4XView = txtABCUrl
+	xABC.SetLayoutAnimated(0, Pad, Y, InnerWidth, 44dip)
+	Y = Y + 50dip
 	Dim xAuto As B4XView = chkAutoPlay
-	xAuto.SetLayoutAnimated(0, Pad, Y, InnerWidth, 46dip)
-	Y = Y + 48dip
+	xAuto.SetLayoutAnimated(0, Pad, Y, InnerWidth, 42dip)
+	Y = Y + 44dip
 	Dim xAwake As B4XView = chkKeepAwake
-	xAwake.SetLayoutAnimated(0, Pad, Y, InnerWidth, 46dip)
-	Y = Y + 54dip
-	btnSaveSettings.SetLayoutAnimated(0, Pad, Y, InnerWidth, 54dip)
-	Y = Y + 62dip
-	Dim HalfWidth As Int = (InnerWidth - 10dip) / 2
-	btnTeamViewer.SetLayoutAnimated(0, Pad, Y, HalfWidth, 48dip)
-	btnResetStreams.SetLayoutAnimated(0, Pad + HalfWidth + 10dip, Y, HalfWidth, 48dip)
+	xAwake.SetLayoutAnimated(0, Pad, Y, InnerWidth, 42dip)
+	Y = Y + 48dip
+	btnSaveSettings.SetLayoutAnimated(0, Pad, Y, InnerWidth, 50dip)
 	Y = Y + 56dip
-	btnCloseSettings.SetLayoutAnimated(0, Pad, Y, InnerWidth, 46dip)
+	Dim HalfWidth As Int = (InnerWidth - 10dip) / 2
+	btnTeamViewer.SetLayoutAnimated(0, Pad, Y, HalfWidth, 44dip)
+	btnResetStreams.SetLayoutAnimated(0, Pad + HalfWidth + 10dip, Y, HalfWidth, 44dip)
+	Y = Y + 50dip
+	btnCloseSettings.SetLayoutAnimated(0, Pad, Y, InnerWidth, 42dip)
 
 	btnSaveSettings.SetColorAndBorder(ColorVision, 0, ColorVision, 14dip)
 	btnTeamViewer.SetColorAndBorder(ColorInk, 0, ColorInk, 12dip)
@@ -431,7 +465,7 @@ Public Sub AudioStateChanged(State As Map)
 	PlaybackState = State.GetDefault("state", STATE_STOPPED)
 	StatusMessage = State.GetDefault("message", "Ready")
 	Dim ServiceStation As String = State.GetDefault("station_id", SelectedStation)
-	If ServiceStation = STATION_2SM Or ServiceStation = STATION_VISION Then
+	If ServiceStation = STATION_2SM Or ServiceStation = STATION_VISION Or ServiceStation = STATION_ABC_SOUTH_QLD Then
 		SelectedStation = ServiceStation
 		Store.Put("selected_station", SelectedStation)
 	End If
@@ -439,7 +473,7 @@ Public Sub AudioStateChanged(State As Map)
 End Sub
 
 Private Sub SyncFromAudioService
-	If AudioService.CurrentStationId = STATION_2SM Or AudioService.CurrentStationId = STATION_VISION Then SelectedStation = AudioService.CurrentStationId
+	If AudioService.CurrentStationId = STATION_2SM Or AudioService.CurrentStationId = STATION_VISION Or AudioService.CurrentStationId = STATION_ABC_SOUTH_QLD Then SelectedStation = AudioService.CurrentStationId
 	If AudioService.PlaybackState.Length > 0 Then PlaybackState = AudioService.PlaybackState
 	If AudioService.StatusMessage.Length > 0 Then StatusMessage = AudioService.StatusMessage
 	If AudioService.CurrentVolume >= 0 Then CurrentVolume = Round(AudioService.CurrentVolume * 100)
@@ -451,6 +485,7 @@ Private Sub RefreshInterface
 	If btn2SM.IsInitialized = False Then Return
 	StyleStationButton(btn2SM, STATION_2SM, Color2SM)
 	StyleStationButton(btnVision, STATION_VISION, ColorVision)
+	StyleStationButton(btnABC, STATION_ABC_SOUTH_QLD, ColorABC)
 
 	Dim Accent As Int = GetStationColor(SelectedStation)
 	lblNowPlaying.Text = GetStationName(SelectedStation)
@@ -492,16 +527,19 @@ End Sub
 
 Private Sub GetStationName(StationId As String) As String
 	If StationId = STATION_VISION Then Return "Vision Christian Radio"
+	If StationId = STATION_ABC_SOUTH_QLD Then Return "ABC Southern Queensland"
 	Return "2SM Super Network"
 End Sub
 
 Private Sub GetStationColor(StationId As String) As Int
 	If StationId = STATION_VISION Then Return ColorVision
+	If StationId = STATION_ABC_SOUTH_QLD Then Return ColorABC
 	Return Color2SM
 End Sub
 
 Private Sub GetStationUrl(StationId As String) As String
 	If StationId = STATION_VISION Then Return UrlVision
+	If StationId = STATION_ABC_SOUTH_QLD Then Return UrlABC
 	Return Url2SM
 End Sub
 
@@ -512,6 +550,7 @@ End Sub
 Private Sub ShowSettings
 	txt2SMUrl.Text = Url2SM
 	txtVisionUrl.Text = UrlVision
+	txtABCUrl.Text = UrlABC
 	chkAutoPlay.Checked = AutoPlay
 	chkKeepAwake.Checked = KeepAwake
 	pnlSettingsOverlay.Visible = True
@@ -529,20 +568,24 @@ End Sub
 Private Sub SaveSettings_Click
 	Dim New2SM As String = txt2SMUrl.Text.Trim
 	Dim NewVision As String = txtVisionUrl.Text.Trim
-	If IsValidStreamUrl(New2SM) = False Or IsValidStreamUrl(NewVision) = False Then
-		xui.MsgboxAsync("Both stream addresses must begin with https://", "Check the addresses")
+	Dim NewABC As String = txtABCUrl.Text.Trim
+	If IsValidStreamUrl(New2SM) = False Or IsValidStreamUrl(NewVision) = False Or IsValidStreamUrl(NewABC) = False Then
+		xui.MsgboxAsync("All stream addresses must begin with https://", "Check the addresses")
 		Return
 	End If
 	Url2SM = New2SM
 	UrlVision = NewVision
+	UrlABC = NewABC
 	AutoPlay = chkAutoPlay.Checked
 	KeepAwake = chkKeepAwake.Checked
 	Store.Put("url_2sm", Url2SM)
 	Store.Put("url_vision", UrlVision)
+	Store.Put("url_abc_south_qld", UrlABC)
 	Store.Put("auto_play", AutoPlay)
 	Store.Put("keep_awake", KeepAwake)
 	AudioService.Url2SM = Url2SM
 	AudioService.UrlVision = UrlVision
+	AudioService.UrlABC = UrlABC
 	ApplyKeepAwake
 	HideSettings
 	ToastMessageShow("Settings saved", False)
@@ -555,6 +598,7 @@ End Sub
 Private Sub ResetStreams_Click
 	txt2SMUrl.Text = DEFAULT_2SM_URL
 	txtVisionUrl.Text = DEFAULT_VISION_URL
+	txtABCUrl.Text = DEFAULT_ABC_SOUTH_QLD_URL
 End Sub
 
 Private Sub TeamViewer_Click

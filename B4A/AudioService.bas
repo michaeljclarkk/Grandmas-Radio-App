@@ -16,11 +16,14 @@ Sub Process_Globals
 
 	Public Const STATION_2SM As String = "2sm"
 	Public Const STATION_VISION As String = "vision"
+	Public Const STATION_ABC_SOUTH_QLD As String = "abc_south_qld"
 	Private Const DEFAULT_2SM_URL As String = "https://cast4.asurahosting.com/proxy/2sm1269/stream"
 	Private Const DEFAULT_VISION_URL As String = "https://streams2.vision.org.au/vision128.mp3"
+	Private Const DEFAULT_ABC_SOUTH_QLD_URL As String = "https://streaming.abc-cdn.net.au/audio/hls/localsouthqld.m3u8?source=web"
 	Private Const ACTION_2SM As String = "radio.action.2sm"
 	Private Const ACTION_TOGGLE As String = "radio.action.toggle"
 	Private Const ACTION_VISION As String = "radio.action.vision"
+	Private Const ACTION_ABC_SOUTH_QLD As String = "radio.action.abc_south_qld"
 	Private Const ACTION_STOP As String = "radio.action.stop"
 
 	Public ServiceCreated As Boolean
@@ -31,6 +34,7 @@ Sub Process_Globals
 	Public CurrentVolume As Double = 0.6
 	Public Url2SM As String = DEFAULT_2SM_URL
 	Public UrlVision As String = DEFAULT_VISION_URL
+	Public UrlABC As String = DEFAULT_ABC_SOUTH_QLD_URL
 
 	Private CurrentStreamUrl As String
 	Private RetryCount As Int
@@ -49,8 +53,9 @@ End Sub
 Private Sub LoadStoredConfiguration
 	Url2SM = Store.GetDefault("url_2sm", DEFAULT_2SM_URL)
 	UrlVision = Store.GetDefault("url_vision", DEFAULT_VISION_URL)
+	UrlABC = Store.GetDefault("url_abc_south_qld", DEFAULT_ABC_SOUTH_QLD_URL)
 	CurrentStationId = Store.GetDefault("selected_station", STATION_2SM)
-	If CurrentStationId <> STATION_2SM And CurrentStationId <> STATION_VISION Then CurrentStationId = STATION_2SM
+	If CurrentStationId <> STATION_2SM And CurrentStationId <> STATION_VISION And CurrentStationId <> STATION_ABC_SOUTH_QLD Then CurrentStationId = STATION_2SM
 	CurrentStationName = GetStationName(CurrentStationId)
 	Dim StoredVolume As Int = Store.GetDefault("volume", 60)
 	CurrentVolume = Max(0, Min(100, StoredVolume)) / 100.0
@@ -69,6 +74,8 @@ Sub Service_Start (StartingIntent As Intent)
 			End If
 		Case ACTION_VISION
 			PlayPreset(STATION_VISION)
+		Case ACTION_ABC_SOUTH_QLD
+			PlayPreset(STATION_ABC_SOUTH_QLD)
 		Case ACTION_STOP
 			StopPlayback
 	End Select
@@ -82,7 +89,14 @@ Public Sub PlayStation(Station As Map)
 	CurrentStreamUrl = Station.GetDefault("url", GetStationUrl(CurrentStationId))
 	CurrentVolume = Station.GetDefault("volume", CurrentVolume)
 	CurrentVolume = Max(0, Min(1, CurrentVolume))
-	If CurrentStationId = STATION_2SM Then Url2SM = CurrentStreamUrl Else UrlVision = CurrentStreamUrl
+	Select CurrentStationId
+		Case STATION_2SM
+			Url2SM = CurrentStreamUrl
+		Case STATION_VISION
+			UrlVision = CurrentStreamUrl
+		Case STATION_ABC_SOUTH_QLD
+			UrlABC = CurrentStreamUrl
+	End Select
 	Store.Put("selected_station", CurrentStationId)
 	PrepareAndPlay
 End Sub
@@ -110,7 +124,11 @@ Private Sub PrepareAndPlay
 		StatusMessage = "Connecting…"
 		NotifyState
 		BuildNotification
-		ExoPlayer.Prepare(ExoPlayer.CreateUriSource(CurrentStreamUrl))
+		If CurrentStreamUrl.ToLowerCase.Contains(".m3u8") Then
+			ExoPlayer.Prepare(ExoPlayer.CreateHLSSource(CurrentStreamUrl))
+		Else
+			ExoPlayer.Prepare(ExoPlayer.CreateUriSource(CurrentStreamUrl))
+		End If
 		ExoPlayer.Volume = CurrentVolume
 		ExoPlayer.Play
 	Catch
@@ -222,6 +240,7 @@ Private Sub BuildNotification
 		Builder.AddButtonAction(EmptyIcon, "Play", Me, ACTION_TOGGLE)
 	End If
 	Builder.AddButtonAction(EmptyIcon, "Vision", Me, ACTION_VISION)
+	Builder.AddButtonAction(EmptyIcon, "ABC SQ", Me, ACTION_ABC_SOUTH_QLD)
 	Builder.AddButtonAction(EmptyIcon, "Stop", Me, ACTION_STOP)
 	Builder.MediaStyle
 
@@ -232,16 +251,19 @@ End Sub
 
 Private Sub GetStationName(StationId As String) As String
 	If StationId = STATION_VISION Then Return "Vision Christian Radio"
+	If StationId = STATION_ABC_SOUTH_QLD Then Return "ABC Southern Queensland"
 	Return "2SM Super Network"
 End Sub
 
 Private Sub GetStationUrl(StationId As String) As String
 	If StationId = STATION_VISION Then Return UrlVision
+	If StationId = STATION_ABC_SOUTH_QLD Then Return UrlABC
 	Return Url2SM
 End Sub
 
 Private Sub GetStationColor(StationId As String) As Int
 	If StationId = STATION_VISION Then Return 0xFF6246EA
+	If StationId = STATION_ABC_SOUTH_QLD Then Return 0xFF0067A8
 	Return 0xFFD62839
 End Sub
 
